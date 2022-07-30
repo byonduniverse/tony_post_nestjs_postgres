@@ -33,11 +33,17 @@ export class UsersService {
   }
 
   findAll() {
-    return this.userRepo.findBy({ role: 'user' });
+    return this.userRepo.find({
+      where: { role: 'user' },
+      relations: ['posts'],
+    });
   }
 
   async findOne(id: number) {
-    const user = await this.userRepo.findOneBy({ id });
+    const user = await this.userRepo.findOne({
+      where: { id },
+      relations: ['posts'],
+    });
     if (!user) {
       throw new NotFoundException('Not found!');
     }
@@ -45,7 +51,7 @@ export class UsersService {
   }
 
   findOneByUsername(username: string) {
-    return this.userRepo.findOneBy({ username });
+    return this.userRepo.findOne({ where: { username }, relations: ['posts'] });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -67,11 +73,14 @@ export class UsersService {
     updating.password = await bcrypt.hash(updateUserDto.password, 10);
 
     await this.userRepo.update({ id }, updating);
-    return this.userRepo.findOneBy({ id });
+    return this.userRepo.findOne({ where: { id }, relations: ['posts'] });
   }
 
   async remove(id: number) {
-    const deleting = await this.userRepo.findOneBy({ id });
+    const deleting = await this.userRepo.findOne({
+      where: { id },
+      relations: ['posts'],
+    });
 
     if (!deleting) {
       throw new NotFoundException('Not found!');
