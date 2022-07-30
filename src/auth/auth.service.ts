@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
+import { User } from 'src/users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { AuthCredentials } from './dto/authCredentials.dto';
 
@@ -17,14 +18,7 @@ export class AuthService {
   ) {}
 
   async register(credentials: AuthCredentials) {
-    const { username } = credentials;
-    const oldUser = await this.usersService.findOneByUsername(username);
-
-    if (oldUser) {
-      throw new BadRequestException('User with that username already exist!');
-    }
-
-    const user = await this.usersService.create(credentials);
+    const user = (await this.usersService.create(credentials)) as User;
 
     const token = await this.jwtService.sign({
       id: user.id,
