@@ -8,3 +8,6 @@ export const dbConnection = {
   autoLoadEntities: true,
   synchronize: true,
 };
+
+export const jwtSecretKey =
+  process.env.jwtSecretKey ?? 'I love Real Madrid CF & G.Bale';
