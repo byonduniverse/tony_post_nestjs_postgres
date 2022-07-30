@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { CreateUserDto } from './dto/create-user.dto';
@@ -15,7 +19,11 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    console.log('dbg: ', bcrypt);
+    const old = await this.findOneByUsername(createUserDto.username);
+    if (old) {
+      throw new BadRequestException('User with that username already exist!');
+    }
+
     const hash = await bcrypt.hash(createUserDto.password, 10);
 
     return this.userRepo.save({
@@ -25,22 +33,51 @@ export class UsersService {
   }
 
   findAll() {
-    return `This action returns all users`;
+    return this.userRepo.findBy({ role: 'user' });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number) {
+    const user = await this.userRepo.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException('Not found!');
+    }
+    return user;
   }
 
   findOneByUsername(username: string) {
     return this.userRepo.findOneBy({ username });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const updating = await this.userRepo.findOneBy({ id });
+
+    if (!updating) {
+      throw new NotFoundException('Not found!');
+    }
+
+    const old = await this.userRepo.findOne({
+      where: { id: Not(id), username: updateUserDto.username },
+    });
+
+    if (old) {
+      throw new BadRequestException('User with that username already exist!');
+    }
+
+    updating.username = updateUserDto.username;
+    updating.password = await bcrypt.hash(updateUserDto.password, 10);
+
+    await this.userRepo.update({ id }, updating);
+    return this.userRepo.findOneBy({ id });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    const deleting = await this.userRepo.findOneBy({ id });
+
+    if (!deleting) {
+      throw new NotFoundException('Not found!');
+    } else {
+      await this.userRepo.delete({ id });
+      return deleting;
+    }
   }
 }

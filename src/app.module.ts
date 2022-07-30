@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
@@ -15,7 +16,12 @@ import { AuthModule } from './auth/auth.module';
     } as TypeOrmModuleOptions),
     PostModule,
     AuthModule,
-    UsersModule,
+    RouterModule.register([
+      {
+        path: '/admin',
+        module: UsersModule,
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [AppService],
