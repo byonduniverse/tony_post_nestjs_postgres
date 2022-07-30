@@ -1,8 +1,9 @@
-import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { User } from '../users/entities/user.entity';
 import { Post } from './entities/post.entity';
 
 @Injectable()
@@ -11,24 +12,24 @@ export class PostService {
     @InjectRepository(Post)
     private readonly postRepo: Repository<Post>,
   ) {}
-  create(createPostDto: CreatePostDto) {
-    return this.postRepo.save(createPostDto);
+  async create(createPostDto: CreatePostDto, user) {
+    return this.postRepo.save({
+      ...createPostDto,
+      user,
+    });
   }
 
   findAll() {
-    return this.postRepo.find();
+    return this.postRepo.find({ relations: ['user'] });
   }
 
   async findOne(id: number) {
-    const post = await this.postRepo.findOneBy({ id });
+    const post = await this.postRepo.findOne({
+      where: { id },
+      relations: ['user'],
+    });
     if (!post) {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          error: 'Not Found!',
-        },
-        HttpStatus.NOT_FOUND,
-      );
+      throw new NotFoundException('Not found!');
     } else {
       return post;
     }
@@ -37,28 +38,19 @@ export class PostService {
   async update(id: number, updatePostDto: UpdatePostDto) {
     const updating = await this.postRepo.findOneBy({ id });
     if (!updating) {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          error: 'Not Found!',
-        },
-        HttpStatus.NOT_FOUND,
-      );
+      throw new NotFoundException('Not found!');
     }
     await this.postRepo.update({ id }, updatePostDto);
-    return this.postRepo.findOneBy({ id });
+    return this.postRepo.findOne({ where: { id }, relations: ['user'] });
   }
 
   async remove(id: number) {
-    const deleting = await this.postRepo.findOneBy({ id });
+    const deleting = await this.postRepo.findOne({
+      where: { id },
+      relations: ['user'],
+    });
     if (!deleting) {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          error: 'Not Found!',
-        },
-        HttpStatus.NOT_FOUND,
-      );
+      throw new NotFoundException('Not found!');
     } else {
       await this.postRepo.delete({ id });
       return deleting;
