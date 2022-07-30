@@ -16,19 +16,6 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUserCredentials(
-    username: string,
-    password: string,
-  ): Promise<any> {
-    const user = await this.usersService.findOneByUsername(username);
-
-    if (user && user.password === password) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
-  }
-
   async register(credentials: AuthCredentials) {
     const { username } = credentials;
     const oldUser = await this.usersService.findOneByUsername(username);
