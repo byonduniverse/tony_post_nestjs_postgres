@@ -18,7 +18,7 @@ export class AuthService {
   ) {}
 
   async register(credentials: AuthCredentials) {
-    const user = (await this.usersService.create(credentials)) as User;
+    const user = await this.usersService.create(credentials);
 
     const token = await this.jwtService.sign({
       id: user.id,
