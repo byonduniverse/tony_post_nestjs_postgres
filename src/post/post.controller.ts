@@ -17,14 +17,13 @@ import { Post as PostEntity } from './entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { User } from '../users/entities/user.entity';
 
 @Controller('post')
+@UseGuards(JwtAuthGuard)
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   create(
     @Body() createPostDto: CreatePostDto,
     @Req() req: Request,
@@ -33,25 +32,32 @@ export class PostController {
   }
 
   @Get()
-  findAll(): Promise<PostEntity[]> {
-    return this.postService.findAll();
+  findAll(@Req() req: Request): Promise<PostEntity[]> {
+    return this.postService.findAll(req.user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<HttpException | PostEntity> {
-    return this.postService.findOne(+id);
+  findOne(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ): Promise<HttpException | PostEntity> {
+    return this.postService.findOne(+id, req.user);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updatePostDto: UpdatePostDto,
+    @Req() req: Request,
   ): Promise<PostEntity | HttpException> {
-    return this.postService.update(+id, updatePostDto);
+    return this.postService.update(+id, updatePostDto, req.user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string): Promise<HttpException | PostEntity> {
-    return this.postService.remove(+id);
+  remove(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ): Promise<HttpException | PostEntity> {
+    return this.postService.remove(+id, req.user);
   }
 }
